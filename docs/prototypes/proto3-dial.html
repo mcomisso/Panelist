@@ -1,0 +1,70 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:480px;height:480px;overflow:hidden}
+body{font-family:'Inter','SF Pro Display','Segoe UI',Roboto,'Ubuntu',sans-serif;-webkit-font-smoothing:antialiased}
+.panel{width:480px;height:480px;display:flex;flex-direction:column;padding:13px 14px 12px;
+  background:radial-gradient(140% 115% at 50% -12%, #171D26 0%, #0E1218 55%, #090C10 100%);color:#EAF0F6}
+header{display:flex;justify-content:space-between;align-items:baseline;padding:1px 4px 10px}
+h1{font-size:17px;font-weight:600}
+.hstat{font-size:13px;font-weight:500;color:#8C9BAB}
+.hstat b{color:#EAF0F6;font-weight:600}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:10px}
+.card{border-radius:24px;padding:9px 8px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  background:linear-gradient(180deg,#1B222C,#12171E);border:1px solid #252E3A;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 5px 12px rgba(0,0,0,.35)}
+.knob{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;
+  background:radial-gradient(circle at 35% 28%, #2E3844, #171D26 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.09), inset 0 -3px 5px rgba(0,0,0,.55), 0 2px 0 rgba(0,0,0,.45)}
+.knob svg{width:24px;height:24px;fill:none;stroke:#8C9BAB;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.knob.on-amber{background:radial-gradient(circle at 35% 28%, #FFEDB0, #F5B93C 58%, #C4861A 100%);
+  box-shadow:0 0 24px rgba(245,185,60,.50), 0 0 6px rgba(245,185,60,.6), inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 5px rgba(126,80,5,.55)}
+.knob.on-amber svg{stroke:#3A2604}
+.knob.on-violet{background:radial-gradient(circle at 35% 28%, #E6D9FF, #B28CFF 58%, #7C4FD1 100%);
+  box-shadow:0 0 24px rgba(178,140,255,.50), 0 0 6px rgba(178,140,255,.6), inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 5px rgba(60,26,120,.55)}
+.knob.on-violet svg{stroke:#1D0F3A}
+.knob.on-blue{background:radial-gradient(circle at 35% 28%, #CFE6FF, #5EA8FF 58%, #2568C4 100%);
+  box-shadow:0 0 24px rgba(94,168,255,.50), 0 0 6px rgba(94,168,255,.6), inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 5px rgba(8,45,95,.55)}
+.knob.on-blue svg{stroke:#06182F}
+.ringwrap{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(#61D68C 0 45%, #232B36 45% 100%)}
+.ringwrap .knob{width:54px;height:54px;background:radial-gradient(circle at 35% 28%, #232C38, #12171E 75%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.07), inset 0 -2px 4px rgba(0,0,0,.5)}
+.ringwrap .knob svg{stroke:#61D68C}
+.name{font-size:13.5px;font-weight:600;line-height:1;letter-spacing:.1px}
+.state{font-size:11px;font-weight:500;color:#7E8D9D;line-height:1}
+.state.lit{color:#F2C95C}
+.state.litv{color:#B28CFF}
+.state.litb{color:#6FB2FF}
+.state.litg{color:#61D68C}
+</style></head><body>
+<div class="panel">
+  <header><h1>Office</h1><div class="hstat"><b>22.1&#176;C</b> &#183; 50%</div></header>
+  <div class="grid">
+    <div class="card">
+      <div class="knob on-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 13v6M8 21h8"/></svg></div>
+      <div><div class="name" style="text-align:center">Spots</div><div class="state lit" style="text-align:center;margin-top:3px">On &#183; 3 lights</div></div>
+    </div>
+    <div class="card">
+      <div class="knob on-violet"><svg viewBox="0 0 24 24"><path d="M12 3l7 4v8l-7 4-7-4V7z"/><path d="M12 11v8M5 7l7 4 7-4"/></svg></div>
+      <div><div class="name" style="text-align:center">Nanoleaf</div><div class="state litv" style="text-align:center;margin-top:3px">On &#183; scene</div></div>
+    </div>
+    <div class="card">
+      <div class="knob on-blue"><svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="4" rx="2"/><path d="M6 16v2M18 16v2"/></svg></div>
+      <div><div class="name" style="text-align:center">Desk LED</div><div class="state litb" style="text-align:center;margin-top:3px">On &#183; 40%</div></div>
+    </div>
+    <div class="card">
+      <div class="knob"><svg viewBox="0 0 24 24"><path d="M9.5 4h5l.7 3.5c1.8 1 3 3 3 5.2A5.8 5.8 0 0 1 12.4 18h-.8a5.8 5.8 0 0 1-5.8-5.3c0-2.2 1.2-4.2 3-5.2z"/><path d="M10 21h4"/></svg></div>
+      <div><div class="name" style="text-align:center">Air con</div><div class="state" style="text-align:center;margin-top:3px">Off &#183; set 23.5&#176;C</div></div>
+    </div>
+    <div class="card">
+      <div class="ringwrap"><div class="knob"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M4 12.5h16M4 16h16"/></svg></div></div>
+      <div><div class="name" style="text-align:center">Blinds</div><div class="state litg" style="text-align:center;margin-top:3px">Open &#183; 45%</div></div>
+    </div>
+    <div class="card">
+      <div class="knob"><svg viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.6 6.6a8 8 0 1 0 10.8 0"/></svg></div>
+      <div><div class="name" style="text-align:center">All off</div><div class="state" style="text-align:center;margin-top:3px">Scene</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

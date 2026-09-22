@@ -1,0 +1,209 @@
+# --- PanelDash configuration (v0.2 - paginated) -------------------------
+# Edit this file and save; the panel reloads it automatically within ~2 s.
+#
+# Config file locations (first readable one wins):
+#   1. /sdcard/paneldash/config.yaml
+#   2. /sdcard/Android/data/com.mcsoftware.paneldash/files/config.yaml
+#
+# Pages: "pages:" is a list; each entry is one screen with a bottom-nav label.
+#   Page 1 should be "Quick" (most-used controls), then one page per category.
+#   Without "pages:", a single "root:" element renders (legacy, no nav bar).
+#
+# Element types:
+#   vstack / hstack   layout containers   props: spacing, padding, children
+#   grid              tile grid           props: columns (1-4), spacing, weight
+#   label             static text or live entity text ({state} / {friendly})
+#   button            tap calls a Home Assistant service (raised look; accent when on)
+#   toggle            switch; tap calls toggle
+#   progress          value bar; reads entity state or an attribute (min/max/format)
+#   camera            tile; tap opens a full-screen live view of a camera entity
+#   check             health row; quiet while ok_above/ok_below/ok_is holds, red when tripped
+#   spacer            gap; use "height" (px) or "weight" (flex)
+# Common props: type, text, size, align, weight, entity, action, service, data, format,
+#               attribute (progress), min/max (progress), sub/sub_entity (button),
+#               color (per-component fill, "#RRGGBB"; defaults to the theme accent)
+#
+# Status tiles: off = near-black tile, on = full fill in the tile's own color.
+#
+# Wall-panel rules this file follows:
+#   header:    info bar rendered above every page (see top of this file)
+#   max 6 tiles per page in a 2-column grid -> big one-finger targets
+# Actions: toggle | turn_on | turn_off | activate | none | service
+#   action: service  ->  set "service: domain.service" and optional "data: {...}"
+# Screen budget: 480 px total, keep each page under ~436 px of content.
+
+server:
+  url: "http://homeassistant.local:8123"
+  token: "PASTE_LONG_LIVED_TOKEN_HERE"   # HA -> Profile -> Security -> Long-lived access tokens
+  # token_file: "/sdcard/paneldash/token.txt"   # optional: read token from a file instead
+  poll_seconds: 5
+
+options:
+  orientation: auto        # auto | portrait | landscape
+  daynight: sensor         # sensor = panel's own light sensor (ambient lux);
+                           # auto = sunrise->sunset (IP location, cached 30 days);
+                           # off = always use `theme` below
+  dark_below_lux: 10       # sensor mode: room counts as dark at/below this
+  light_above_lux: 40      # sensor mode: room counts as lit at/above this
+  #auto_brightness: true   # optional: scale screen brightness from the light sensor
+  #brightness_min: 10
+  #brightness_max: 255
+  #idle_return_seconds: 900 # optional: back to the first page after N s with no touches
+  #latitude: 51.5074       # daynight: auto - optional, skips the IP lookup
+  #longitude: -0.1278
+
+# Single theme (used when daynight is off, and until day/night themes parse)
+theme:
+  background: "#0E1116"
+  surface: "#1B222C"
+  accent: "#3D8BFD"
+  text: "#EAF0F6"
+  radius: 14
+  font_scale: 1.0
+
+# Optional day/night pair (both or neither; each falls back to `theme`)
+theme_dark:
+  background: "#000000"
+  surface: "#161B21"
+  accent: "#FF7A1A"
+  text: "#EAF0F6"
+  radius: 12
+  font_scale: 1.0
+
+theme_light:
+  background: "#EEF1F5"
+  surface: "#FFFFFF"
+  accent: "#FF7A1A"
+  text: "#141A21"
+  radius: 12
+  font_scale: 1.0
+
+# ---- Optional: doorbell alert (live camera popup on ring) --------------
+#doorbell:
+#  entity: binary_sensor.doorbell_doorbell_2
+#  camera: camera.front_door
+#  title: "Front door"
+#  seconds: 30
+#  sound: true          # play a chime on the panel speaker (bundled bell)
+#  volume: 0.8          # chime gain 0-1, independent of system volume
+
+# ---- Optional: wake on approach (dim when nobody is near) --------------
+#proximity:
+#  enabled: true
+#  near_value: 2000
+#  away_seconds: 45
+#  dim_brightness: 0.03
+
+# ---- Info bar: rendered above every page -------------------------------
+header:
+  type: hstack
+  spacing: 6
+  padding: 8
+  children:
+    - type: label
+      text: "Home"
+      size: 18
+      weight: 1
+    - type: label
+      format: "{state}°C"
+      entity: sensor.living_room_temperature
+      size: 18
+    - type: label
+      format: "{state}%"
+      entity: sensor.living_room_humidity
+      size: 18
+
+pages:
+  # ---- Quick: the few things touched most ------------------------------
+  - name: "Quick"
+    type: vstack
+    padding: 8
+    spacing: 8
+    children:
+      # 6 big tiles, 2 per row - the wall-panel layout
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: toggle
+            text: "Lights"
+            entity: light.living_room
+            action: toggle
+          - type: toggle
+            text: "Door"
+            entity: binary_sensor.example_door
+            action: none
+
+          - type: toggle
+            text: "Desk lamp"
+            entity: switch.desk_lamp
+            action: toggle
+          - type: button
+            text: "All off"
+            entity: scene.all_off
+            action: activate
+            highlight: false
+
+  # ---- One page per category -------------------------------------------
+  - name: "Lights"
+    type: vstack
+    padding: 10
+    spacing: 8
+    children:
+      - type: toggle
+        text: "Living room"
+        entity: light.living_room
+        action: toggle
+      - type: toggle
+        text: "Desk lamp"
+        entity: switch.desk_lamp
+        action: toggle
+      - type: hstack
+        spacing: 6
+        children:
+          - type: button
+            text: "Bright"
+            entity: scene.living_bright
+            action: activate
+            weight: 1
+          - type: button
+            text: "Dim"
+            entity: scene.living_dim
+            action: activate
+            weight: 1
+
+  - name: "Climate"
+    type: vstack
+    padding: 10
+    spacing: 8
+    children:
+      - type: toggle
+        text: "Air conditioning"
+        entity: climate.living_room_ac
+        action: toggle
+      - type: hstack
+        spacing: 6
+        children:
+          - type: label
+            format: "AC {state}"
+            entity: climate.living_room_ac
+            weight: 1
+          - type: label
+            format: "Hum {state}%"
+            entity: sensor.living_room_humidity
+            weight: 1
+      # Example: live target temperature bar (climate's temperature attribute)
+      #- type: progress
+      #  text: "AC target"
+      #  entity: climate.living_room_ac
+      #  attribute: temperature
+      #  min: 16
+      #  max: 30
+      #  format: "{value}\u00b0C"
+
+# Example - scripts with extra service data:
+#    - type: button
+#      text: "Movie time"
+#      action: service
+#      service: script.movie_time

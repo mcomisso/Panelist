@@ -1,0 +1,128 @@
+# --- PanelDash configuration (v0.2 - paginated) -------------------------
+# Edit this file and save; the panel reloads it automatically within ~2 s.
+#
+# Config file locations (first readable one wins):
+#   1. /sdcard/paneldash/config.yaml
+#   2. /sdcard/Android/data/com.mcsoftware.paneldash/files/config.yaml
+#
+# Pages: "pages:" is a list; each entry is one screen with a bottom-nav label.
+#   Page 1 should be "Quick" (most-used controls), then one page per category.
+#   Without "pages:", a single "root:" element renders (legacy, no nav bar).
+#
+# Element types:
+#   vstack / hstack   layout containers   props: spacing, padding, children
+#   label             static text or live entity text ({state} / {friendly})
+#   button            tap calls a Home Assistant service
+#   toggle            switch; tap calls toggle
+#   spacer            gap; use "height" (px) or "weight" (flex)
+# Common props: type, text, size, align, weight, entity, action, service, data, format
+# Actions: toggle | turn_on | turn_off | activate | none | service
+#   action: service  ->  set "service: domain.service" and optional "data: {...}"
+# Screen budget: 480 px total, keep each page under ~436 px of content.
+
+server:
+  url: "http://homeassistant.local:8123"
+  token: "PASTE_LONG_LIVED_TOKEN_HERE"   # HA -> Profile -> Security -> Long-lived access tokens
+  # token_file: "/sdcard/paneldash/token.txt"   # optional: read token from a file instead
+  poll_seconds: 5
+
+options:
+  orientation: auto        # auto | portrait | landscape
+
+theme:
+  background: "#0E1116"
+  surface: "#1B222C"
+  accent: "#3D8BFD"
+  text: "#EAF0F6"
+  radius: 14
+  font_scale: 1.0
+
+pages:
+  # ---- Quick: the few things touched most ------------------------------
+  - name: "Quick"
+    type: vstack
+    padding: 10
+    spacing: 8
+    children:
+      - type: hstack
+        spacing: 6
+        children:
+          - type: label
+            text: "Home"
+            size: 20
+            weight: 1
+          - type: label
+            format: "{state}°C"
+            entity: sensor.living_room_temperature
+      - type: hstack
+        spacing: 6
+        children:
+          - type: toggle
+            text: "Lights"
+            entity: light.living_room
+            action: toggle
+            weight: 1
+          - type: toggle
+            text: "Door"
+            entity: binary_sensor.example_door
+            action: none
+            weight: 1
+      - type: button
+        text: "All off"
+        entity: scene.all_off
+        action: activate
+
+  # ---- One page per category -------------------------------------------
+  - name: "Lights"
+    type: vstack
+    padding: 10
+    spacing: 8
+    children:
+      - type: toggle
+        text: "Living room"
+        entity: light.living_room
+        action: toggle
+      - type: toggle
+        text: "Desk lamp"
+        entity: switch.desk_lamp
+        action: toggle
+      - type: hstack
+        spacing: 6
+        children:
+          - type: button
+            text: "Bright"
+            entity: scene.living_bright
+            action: activate
+            weight: 1
+          - type: button
+            text: "Dim"
+            entity: scene.living_dim
+            action: activate
+            weight: 1
+
+  - name: "Climate"
+    type: vstack
+    padding: 10
+    spacing: 8
+    children:
+      - type: toggle
+        text: "Air conditioning"
+        entity: climate.living_room_ac
+        action: toggle
+      - type: hstack
+        spacing: 6
+        children:
+          - type: label
+            format: "AC {state}"
+            entity: climate.living_room_ac
+            weight: 1
+          - type: label
+            format: "Hum {state}%"
+            entity: sensor.living_room_humidity
+            weight: 1
+
+# Example - scripts with extra service data:
+#    - type: button
+#      text: "Movie time"
+#      action: service
+#      service: script.movie_time

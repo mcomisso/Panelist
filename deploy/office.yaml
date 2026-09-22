@@ -1,0 +1,346 @@
+# PanelDash full-feature example — an office dashboard.
+# Copy this file and adapt the entity IDs to your own Home Assistant.
+#
+# Design rules this layout follows:
+#   - header:        info bar, always visible on every page (temp / humidity)
+#   - max 6 tiles:   grid of big one-finger targets per page
+#   - pages:         Quick -> Lights -> Climate -> Blinds -> Cams (bottom nav)
+#   - camera tiles:  label + VIEW; tap opens a full-screen live view (tap CLOSE to exit)
+#   - status tiles:  OFF = near-black tile; ON = full fill in the tile's OWN color
+#   - per-tile color: any tile/progress accepts "color: \"#RRGGBB\""
+#
+# Screen budget: 480x480. Header ~40 px, nav ~56 px, page content ~384 px.
+# Token: lives on the panel at /sdcard/paneldash/token.txt (pushed by
+# scripts/deploy.sh from a file on your machine) — never stored in this file.
+
+server:
+  url: "http://homeassistant.local:8123"
+  token_file: "/sdcard/paneldash/token.txt"
+  poll_seconds: 3
+
+options:
+  orientation: auto
+  # Theme switching:
+  #   sensor = read the panel's own light sensor (ambient lux) -- light theme in a
+  #            lit room, dark theme in a dark room. 8s debounce so passing shadows
+  #            don't flip it.
+  #   auto   = sun times from IP geolocation (sunrise -> sunset light)
+  #   off    = always use the single `theme` below
+  daynight: sensor
+  # sensor thresholds: go dark at/below dark_below_lux, light at/above light_above_lux.
+  # Calibrate these to YOUR room: read the sensor dark and lit, set the thresholds
+  # between the two readings (this example: dim evenings ~40 lx, lights on ~700 lx).
+  # Between the two, the current theme sticks (hysteresis + 8s debounce).
+  dark_below_lux: 60
+  light_above_lux: 200
+  # Dim the backlight in a dark room, full brightness in daylight
+  auto_brightness: true
+  brightness_min: 30
+  brightness_max: 255
+  # Drift back to the first page after 15 min with no touches (0 = disabled).
+  idle_return_seconds: 900
+  # For daynight: auto you can pin the location instead of IP geolocation:
+  #latitude: 51.5074
+  #longitude: -0.1278
+
+# Used while the location is being resolved (first boot) and when daynight is off.
+theme:
+  background: "#000000"     # status-tile style: near-black page
+  surface: "#161B21"        # off-tile base
+  accent: "#FF7A1A"         # orange: default on-fill + nav + gauges
+  text: "#EAF0F6"
+  radius: 12
+  font_scale: 1.0
+
+# ── Night palette ─────────────────────────────────────────────────────
+theme_dark:
+  background: "#000000"
+  surface: "#161B21"
+  accent: "#FF7A1A"
+  text: "#EAF0F6"
+  radius: 12
+  font_scale: 1.0
+
+# ── Day palette (a genuinely lit room) ────────────────────────────────
+theme_light:
+  background: "#EEF1F5"     # soft daylight gray
+  surface: "#FFFFFF"        # off tiles read as white cards
+  accent: "#FF7A1A"
+  text: "#141A21"           # near-black text
+  radius: 12
+  font_scale: 1.0
+
+# ── Doorbell alert ────────────────────────────────────────────────────
+# When the ring entity turns on, the panel interrupts whatever it shows
+# with a full-screen live camera view + dismiss. Auto-dismisses after
+# `seconds`; a second ring restarts the countdown.
+doorbell:
+  entity: binary_sensor.doorbell          # ring = occupancy on (or an event. entity)
+  camera: camera.front_door
+  title: "Front door"
+  seconds: 30
+  sound: true          # one short chime on the panel speaker when it rings
+  volume: 0.8          # chime gain (0-1); independent of the system volume
+
+# ── Wake on approach ─────────────────────────────────────────────────
+# The panel's proximity sensor watches for someone nearby. After
+# `away_seconds` with no approach and no touch, the backlight drops to
+# `dim_brightness` (near-black); any approach or touch wakes it back.
+proximity:
+  enabled: true
+  near_value: 2000      # raw reading >= this = someone close (stock app default)
+  near_delta: 25        # ...or a jump this far from the resting baseline
+                        # (idle noise is ~±8, so 25 never false-fires)
+  away_seconds: 45
+  dim_brightness: 0.03
+
+# ── Info bar: renders above every page ────────────────────────────────
+header:
+  type: hstack
+  spacing: 6
+  padding: 8
+  children:
+    - type: label
+      text: "Office"
+      size: 18
+      weight: 1
+    - type: label
+      entity: sensor.office_temperature
+      format: "{state}°C"
+      decimals: 1
+      size: 18
+    - type: label
+      entity: sensor.office_humidity
+      format: "{state}%"
+      decimals: 0
+      size: 18
+
+pages:
+
+  # ── 1. QUICK — the six things touched most ─────────────────────────
+  - name: "Quick"
+    type: vstack
+    spacing: 8
+    padding: 8
+    children:
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: toggle
+            text: "Spots"
+            entity: light.office
+            action: toggle
+            color: "#FFA43C"
+          - type: toggle
+            text: "Accent"
+            entity: light.office_accent
+            action: toggle
+            color: "#B28CFF"
+
+          - type: toggle
+            text: "Desk LED"
+            entity: switch.desk_led
+            action: toggle
+            color: "#5EA8FF"
+          - type: button
+            text: "AC on/off"
+            action: service
+            service: script.office_ac_on_off
+            sub: "AC {state}"
+            sub_entity: climate.office_ac
+            color: "#4CD1E0"
+
+          - type: button
+            text: "All off"
+            entity: scene.office_off
+            action: activate
+            highlight: false
+          - type: button
+            text: "Blinds 50%"
+            entity: cover.blinds
+            action: service
+            service: cover.set_cover_position
+            data: { position: 50 }
+            highlight: false
+            sub: "Now {state}"
+            sub_entity: cover.blinds
+            color: "#61D68C"
+
+  # ── 2. LIGHTS ───────────────────────────────────────────────────────
+  - name: "Lights"
+    type: vstack
+    spacing: 8
+    padding: 8
+    children:
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: toggle
+            text: "Spots"
+            entity: light.office
+            action: toggle
+            color: "#FFA43C"
+          - type: toggle
+            text: "Accent"
+            entity: light.office_accent
+            action: toggle
+            color: "#B28CFF"
+
+          - type: toggle
+            text: "Desk LED"
+            entity: switch.desk_led
+            action: toggle
+            color: "#5EA8FF"
+          - type: button
+            text: "Read"
+            entity: scene.office_read
+            action: activate
+            highlight: false
+            color: "#FFC46B"
+
+          - type: button
+            text: "Focus"
+            entity: scene.office_focus
+            action: activate
+            highlight: false
+            color: "#9FDC6A"
+          - type: button
+            text: "Night"
+            entity: scene.office_nightlight
+            action: activate
+            highlight: false
+            color: "#7A8CFF"
+
+  # ── 3. CLIMATE ──────────────────────────────────────────────────────
+  - name: "Climate"
+    type: vstack
+    spacing: 8
+    padding: 8
+    children:
+      # Live target temperature — climate 'temperature' attribute, 18-30 range.
+      - type: progress
+        text: "AC target"
+        entity: climate.office_ac
+        attribute: temperature
+        min: 18
+        max: 30
+        format: "{value}°C"
+        color: "#4CD1E0"
+
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: button
+            text: "AC on/off"
+            action: service
+            service: script.office_ac_on_off
+            sub: "AC {state}"
+            sub_entity: climate.office_ac
+            color: "#4CD1E0"
+          - type: button
+            text: "−0.5°"
+            action: service
+            service: script.office_ac_temp_down
+            highlight: false
+            color: "#4CD1E0"
+
+          - type: button
+            text: "+0.5°"
+            action: service
+            service: script.office_ac_temp_up
+            highlight: false
+            color: "#4CD1E0"
+          - type: toggle
+            text: "Radiator"
+            entity: climate.office_radiator
+            action: toggle
+            color: "#FF8A5C"
+
+          - type: toggle
+            text: "Fan"
+            entity: switch.office_fan
+            action: toggle
+            color: "#8ED8FF"
+
+  # ── 4. BLINDS ───────────────────────────────────────────────────────
+  - name: "Blinds"
+    type: vstack
+    spacing: 8
+    padding: 8
+    children:
+      # Live opening percentage — reads the cover's current_position attribute.
+      - type: progress
+        text: "Position"
+        entity: cover.blinds
+        attribute: current_position     # 0 = closed, 100 = fully open
+        min: 0
+        max: 100
+        format: "{value}%"
+        color: "#61D68C"
+
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: button
+            text: "Open"
+            entity: cover.blinds
+            action: service
+            service: cover.open_cover
+            highlight: false
+            color: "#61D68C"
+          - type: button
+            text: "50%"
+            entity: cover.blinds
+            action: service
+            service: cover.set_cover_position
+            data: { position: 50 }
+            highlight: false
+            color: "#61D68C"
+
+          - type: button
+            text: "Close"
+            entity: cover.blinds
+            action: service
+            service: cover.close_cover
+            highlight: false
+            color: "#61D68C"
+          - type: button
+            text: "Stop"
+            entity: cover.blinds
+            action: service
+            service: cover.stop_cover
+            highlight: false
+            color: "#61D68C"
+
+  # ── 5. CAMS — tap any tile for a full-screen live view ─────────────
+  - name: "Cams"
+    type: vstack
+    spacing: 8
+    padding: 8
+    children:
+      - type: grid
+        columns: 2
+        spacing: 8
+        weight: 1
+        children:
+          - type: camera
+            text: "Doorbell"
+            entity: camera.front_door
+          - type: camera
+            text: "Backyard"
+            entity: camera.backyard
+
+          - type: camera
+            text: "Driveway"
+            entity: camera.driveway
+          - type: camera
+            text: "Side gate"
+            entity: camera.side_gate
